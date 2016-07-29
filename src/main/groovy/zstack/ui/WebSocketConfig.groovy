@@ -1,4 +1,4 @@
-package zstack.ui
+package zstackui
 
 import grails.plugin.springwebsocket.GrailsSimpAnnotationMethodMessageHandler
 import org.springframework.context.annotation.Bean
