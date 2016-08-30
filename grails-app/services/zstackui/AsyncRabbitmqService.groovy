@@ -5,21 +5,24 @@ import grails.core.GrailsApplication
 
 class AsyncRabbitmqService {
 
-    private static final String EXCHANGE_NAME = "BROADCAST"
-    private static final String QUEUE_NAME = "hello.zstack.message"
-
     static scope = "singleton"
+
     GrailsApplication grailsApplication
+
+    def UuidService
     def lastMessage
 
     def initialize() {
+        def EXCHANGE_NAME = "BROADCAST"
+        def QUEUE_NAME = "zstack.newui.api.event." + UuidService.getUuid()
+
         ConnectionFactory factory = new ConnectionFactory();
         factory.setHost(grailsApplication.config.getProperty('rabbitmq.host'));
         Connection connection = factory.newConnection();
         Channel channel = connection.createChannel();
 
         channel.exchangeDeclare(EXCHANGE_NAME, "topic");
-        channel.queueDeclare(QUEUE_NAME, false, false, false, null);
+        channel.queueDeclare(QUEUE_NAME, false, false, true, null);
         //String queueName = channel.queueDeclare().getQueue();
         channel.queueBind(QUEUE_NAME, EXCHANGE_NAME, "key.event.API.API_EVENT");
         Consumer consumer = new DefaultConsumer(channel) {
