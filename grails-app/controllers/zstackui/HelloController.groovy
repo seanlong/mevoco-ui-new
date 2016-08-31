@@ -5,10 +5,10 @@ import org.springframework.messaging.handler.annotation.SendTo
 
 class HelloController {
 
-    def AsyncRabbitmqClient
+    def asyncRabbitmqService
 
     def index() {
-        println AsyncRabbitmqClient.getLastMessage()
+        println asyncRabbitmqService.getLastMessage()
         render(view: "index")
     }
 
