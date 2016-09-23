@@ -21,3 +21,5 @@ if (Environment.isDevelopmentMode() && targetDir) {
     }
     logger("StackTrace", ERROR, ['FULL_STACKTRACE'], false)
 }
+
+logger('org.springframework.boot.autoconfigure.security', INFO)

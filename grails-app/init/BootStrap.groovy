@@ -1,13 +1,18 @@
+import zstackui.EventListenerService
+import zstackui.RabbitmqAsyncSenderService
+import zstackui.RabbitmqSyncSenderService
+
 class BootStrap {
 
-    def asyncRabbitmqService
-    def syncRabbitmqService
+    RabbitmqSyncSenderService rabbitmqSyncSenderService
+    RabbitmqAsyncSenderService rabbitmqAsyncSenderService
+    EventListenerService eventListenerService
 
     def init = { servletContext ->
-        asyncRabbitmqService.initialize()
-        syncRabbitmqService.initialize()
-
+        rabbitmqSyncSenderService.initialize()
+        rabbitmqAsyncSenderService.initialize()
     }
+
     def destroy = {
     }
 }
