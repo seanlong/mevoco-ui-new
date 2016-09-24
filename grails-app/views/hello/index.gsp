@@ -18,14 +18,25 @@
                         $("#helloDiv").append(message.body);
                     });
                     var received = false;
-                    client.subscribe("/user/queue/hello", function(message) {
+                    client.subscribe("/user/queue/reply", function(message) {
                         var result = JSON.parse(message.body);
                         // Assume the first reply message is login reply
                         if (!received) {
                             received = true;
                             window.sessionUuid = result["org.zstack.header.identity.APILogInReply"].inventory.uuid;
+                        } else {
+                            var callId;
+                            for (var k in result) {
+                                if (result[k].session && result[k].session.callid)
+                                    callId = result[k].session.callid;
+                            }
+                            if (!callId || !window.pendingCalls[callId]) {
+                                console.error("message could not be handled:", result);
+                            } else {
+                                window.pendingCalls[callId](result);
+                                delete window.pendingCalls[callId];
+                            }
                         }
-                        console.log(result);
                     });
                 });
 
@@ -43,18 +54,32 @@
                     client.send("/app/sync", {}, JSON.stringify(data));
                 });
 
-                var enabled = true;
-                $("#toggleImage").click(function() {
-                    var data = {
-                        "org.zstack.header.image.APIChangeImageStateMsg": {
-                            "uuid": "e52b3074fcb746129edf09cb97bf5ca7",
-                            "stateEvent": enabled ? "disable" : "enable",
-                            "session": { "uuid": window.sessionUuid }
-                        }
-                    };
-                    enabled = !enabled;
-                    client.send("/app/async", {}, JSON.stringify(data));
+                function createCallId(length) {
+                    var charset = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
+                    var i;
+                    var result = "api-";
+                    values = new Uint32Array(length);
+                    window.crypto.getRandomValues(values);
+                    for(i=0; i<length; i++) {
+                        result += charset[values[i] % charset.length];
+                    }
+                    return result;
+                }
 
+                window.pendingCalls = {};
+                function apiCall(isSync, data) {
+                    return new Promise(function(resolve) {
+                        var callId = createCallId(8);
+                        data[Object.keys(data)[0]].session = {
+                            uuid: window.sessionUuid,
+                            callid: callId
+                        };
+                        client.send(isSync ? "/app/sync" : "/app/async", {}, JSON.stringify(data));
+                        window.pendingCalls[callId] = resolve;
+                    });
+                }
+
+                function getImages() {
                     data = {
                         "org.zstack.header.image.APIQueryImageMsg": {
                           count: false,
@@ -63,15 +88,33 @@
                           replyWithCount: true,
                           sortBy: "name",
                           sortDirection: "asc",
-                          conditions: [
-                            {"name":"status","op":"!=","value":"Deleted"}
-                          ],
-                          session: {
-                            uuid: window.sessionUuid
-                          }
+                          conditions: [ {"name":"status","op":"!=","value":"Deleted"} ],
                         }
                     };
-                    client.send("/app/sync", {}, JSON.stringify(data));
+                    return apiCall(true, data);
+                }
+
+                function setImageState(enable) {
+                    var data = {
+                        "org.zstack.header.image.APIChangeImageStateMsg": {
+                            "uuid": "e52b3074fcb746129edf09cb97bf5ca7",
+                            "stateEvent": enable ? "enable" : "disable",
+                        }
+                    };
+                    return apiCall(false, data);
+                }
+
+                var imageEnabled = true;
+                $("#toggleImage").click(function() {
+                    getImages()
+                        .then(function(ret) {
+                            console.log(ret);
+                            return setImageState(imageEnabled);
+                        })
+                        .then(function(ret) {
+                            console.log(ret);
+                            imageEnabled = !imageEnabled;
+                        });
                 });
             });
         </script>
@@ -79,7 +122,7 @@
     <body>
         <button id="helloButton">hello</button>
         <button id="loginButton">login</button>
-        <button id="toggleImage">toggle</button>
+        <button id="toggleImage">toggle image state</button>
         <div id="helloDiv"></div>
     </body>
 </html>

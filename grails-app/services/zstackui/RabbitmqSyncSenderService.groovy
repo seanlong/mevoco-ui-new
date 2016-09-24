@@ -61,7 +61,7 @@ class RabbitmqSyncSenderService implements Runnable {
                     .replyTo(REPLY_QUEUE_NAME)
                     .build()
             channel.basicPublish(P2P_EXCHANGE, ROUTING_KEY, props, JsonOutput.toJson(obj).getBytes("UTF-8"))
-            rabbitmqReceiverService.addPendingMessage(message, corrId)
+            rabbitmqReceiverService.addPendingMessage(message.getUsername(), body["session"], corrId)
         }
     }
 }
