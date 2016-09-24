@@ -104,6 +104,22 @@
                     return apiCall(false, data);
                 }
 
+                function createVm() {
+                    var data = {
+                        "org.zstack.header.vm.APICreateVmInstanceMsg": {
+                            "name": "test",
+                            "instanceOfferingUuid": "53202395b66641498d903323c0c47327",
+                            "imageUuid": "b2daec3f1bac40fd89c4d830ba340238",
+                            "l3NetworkUuids": ["9f4cec52952b4589be0ec5c5a2eaa3fb"],
+                            "dataDiskOfferingUuids":[],
+                            "defaultL3NetworkUuid":"9f4cec52952b4589be0ec5c5a2eaa3fb",
+                            "systemTags":[],
+                        }
+                    };
+
+                    return apiCall(false, data);
+                }
+
                 var imageEnabled = true;
                 $("#toggleImage").click(function() {
                     getImages()
@@ -116,6 +132,13 @@
                             imageEnabled = !imageEnabled;
                         });
                 });
+
+                $("#createVm").click(function() {
+                    createVm()
+                        .then(function(ret) {
+                            console.log(ret);
+                        });
+                });
             });
         </script>
     </head>
@@ -123,6 +146,7 @@
         <button id="helloButton">hello</button>
         <button id="loginButton">login</button>
         <button id="toggleImage">toggle image state</button>
+        <button id="createVm">create virtual machine</button>
         <div id="helloDiv"></div>
     </body>
 </html>

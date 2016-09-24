@@ -45,16 +45,16 @@ class RabbitmqReceiverService {
                 def messageId
                 if (bodyHeaders["isReply"] == "true" && bodyHeaders["correlationId"])
                     messageId = bodyHeaders["correlationId"]
-                else {
-                    if (messageBody["apiId"])
-                        messageId = messageBody["apiId"]
-                    else
-                        throw new Exception("Message not found in pending list")
-                }
+                else if (messageBody["apiId"])
+                    messageId = messageBody["apiId"]
+                else
+                    throw new Exception("MessageId not specified")
                 def data = pendingMessages.get(messageId)
+                if (data == null)
+                    throw new Exception("Message not found in pending list")
                 if (data["session"] != null)
                     messageBody["session"] = data["session"]
-                brokerMessagingTemplate.convertAndSendToUser(data["username"], "/queue/reply", JsonOutput.toJson(obj))
+                brokerMessagingTemplate.convertAndSendToUser(data["username"] as String, "/queue/reply", JsonOutput.toJson(obj))
                 pendingMessages.remove(messageId)
             }
         }
